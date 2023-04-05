@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import getConfig from 'next/config';
 import geobuf from 'geobuf';
 import Pbf from 'pbf';
+import * as turf from '@turf/turf'
 import axios from 'axios';
 import sql from '../../lib/db';
 
@@ -26,6 +27,7 @@ interface GeoJsonFeature {
 interface GeoJsonFeatureCollection {
   type: 'FeatureCollection';
   features: GeoJsonFeature[];
+  properties?: any;
 };
 
 interface Result {
@@ -154,17 +156,28 @@ export default async function handler(
       features,
     }
 
+    const bbox = turf.bbox(featureCollection);
+    const center = turf.center(featureCollection);
+
+    const geoJsonFeatureCollection: GeoJsonFeatureCollection = {
+      ...featureCollection,
+      properties: {
+        center: center.geometry.coordinates,
+        bbox,
+      }
+    }
+
     switch (format) {
       case 'geobuf':
         let result = '';
-        const buffer = geobuf.encode(featureCollection, new Pbf());
+        const buffer = geobuf.encode(geoJsonFeatureCollection, new Pbf());
         const bufView = new Uint16Array(buffer);
         for (let i = 0; i < bufView.length; i++) {
           result += String.fromCharCode(bufView[i]);
         }
         return res.status(200).send(result);
       default:
-        return res.status(200).json(featureCollection);
+        return res.status(200).json(geoJsonFeatureCollection);
     }
   }
 }
