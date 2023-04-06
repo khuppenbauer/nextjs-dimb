@@ -5,30 +5,8 @@ import Pbf from 'pbf';
 import * as turf from '@turf/turf'
 import axios from 'axios';
 import sql from '../../lib/db';
-
-interface GeoJsonPolygon {
-  type: 'Polygon';
-  coordinates: number[][][];
-};
-
-interface GeoJsonMultiPolygon {
-  type: 'MultiPolygon';
-  coordinates: number[][][][];
-};
-
-interface GeoJsonFeature {
-  type: 'Feature';
-  geometry: GeoJsonPolygon | GeoJsonMultiPolygon;
-  properties: {
-    name: string;
-  };
-};
-
-interface GeoJsonFeatureCollection {
-  type: 'FeatureCollection';
-  features: GeoJsonFeature[];
-  properties?: any;
-};
+import GeoJsonFeatureCollectionType from '../../interfaces/geoJsonFeatureCollection';
+import GeoJsonFeatureType from '../../interfaces/geoJsonFeature';
 
 interface Result {
   dimb_ig: string;
@@ -89,7 +67,7 @@ async function parseData(data: Result[]) {
         coordinates: coords,
       },
       properties,
-    } as GeoJsonFeature;
+    } as GeoJsonFeatureType;
   });
 }
 
@@ -157,7 +135,7 @@ export default async function handler(
       }
     }
 
-    const featureCollection: GeoJsonFeatureCollection = {
+    const featureCollection: GeoJsonFeatureCollectionType = {
       type: 'FeatureCollection',
       features,
     }
@@ -165,7 +143,7 @@ export default async function handler(
     const bbox = turf.bbox(featureCollection);
     const center = turf.center(featureCollection);
 
-    const geoJsonFeatureCollection: GeoJsonFeatureCollection = {
+    const geoJsonFeatureCollection: GeoJsonFeatureCollectionType = {
       ...featureCollection,
       properties: {
         center: center.geometry.coordinates,
