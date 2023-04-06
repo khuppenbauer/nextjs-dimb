@@ -147,8 +147,14 @@ export default async function handler(
         }
         GROUP BY dimb_ig
       `;
-      features = await parseData(data);
-      await insertCache(cacheKey, features);
+      if (data.length > 0) {
+        features = await parseData(data);
+        if (features.length > 0) {
+          await insertCache(cacheKey, features);
+        }
+      } else {
+        return res.status(404).send('Not Found');
+      }
     }
 
     const featureCollection: GeoJsonFeatureCollection = {
