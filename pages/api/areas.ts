@@ -10,6 +10,7 @@ import GeoJsonFeatureType from '../../interfaces/geoJsonFeature';
 
 interface Result {
   dimb_ig: string;
+  plz?: string;
   geometry: string;
 }
 
@@ -36,9 +37,8 @@ async function getAreas() {
 }
 
 async function parseData(data: Result[]) {
-  const areas = await getAreas();
   return data.map((item) => {
-    const { dimb_ig, geometry } = item;
+    const { dimb_ig, plz, geometry } = item;
     const geoJson = JSON.parse(geometry);
     const { type, coordinates } = geoJson;
     const coords: number[][][] = [];
@@ -59,7 +59,7 @@ async function parseData(data: Result[]) {
       });
     }
 
-    const properties = areas[dimb_ig] || { name: dimb_ig };
+    const properties = { name: dimb_ig, plz: plz?.split(',') };
     return {
       type: 'Feature',
       geometry: {
@@ -108,7 +108,7 @@ export default async function handler(
       features = cacheData[0]['value'];
     } else {
       const data = await sql<Result[]>`
-        SELECT dimb_ig, ST_AsGeoJSON(ST_Union(ST_Simplify(geometry, ${simplify}))) AS geometry
+        SELECT dimb_ig, string_agg(dimb.plz, ',') as plz, ST_AsGeoJSON(ST_Union(ST_Simplify(geometry, ${simplify}))) AS geometry
         FROM dimb_ig_plz AS dimb
         JOIN dimb_opendatasoft_plz_germany AS geodata
         ON geodata.plz_code = dimb.plz
