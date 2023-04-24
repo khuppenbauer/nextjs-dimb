@@ -19,20 +19,26 @@ const {
 } = getConfig();
 
 async function getAreas() {
-  const { data: metaData } = await axios({
-    url: metaDataUrl,
-    method: 'get',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-  
+  let metaData = null;
   const areas: {[key: string]: any} = {};
-  metaData.areas.forEach((area: any) => {
-    const { name } = area;
-    const areaName = `DIMB ${name}`;
-    areas[areaName] = area;
-  });
+  try {
+    const result = await axios({
+      url: metaDataUrl,
+      method: 'get',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    metaData = result.data;
+  } catch (error) {
+    console.log(error);
+  } finally {
+    metaData?.areas.forEach((area: any) => {
+      const { name } = area;
+      const areaName = `DIMB ${name}`;
+      areas[areaName] = area;
+    });
+  }
   return areas;
 }
 
