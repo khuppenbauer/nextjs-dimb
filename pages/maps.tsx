@@ -18,7 +18,7 @@ const Maps = ({ data }: Result) => {
   )
 }
 
-export async function getServerSideProps() {
+export async function getStaticProps() {
   const url = `${baseUrl}/api/areas?simplify=0.001`;
   const { data }: Result = await axios.get(url)
   return {

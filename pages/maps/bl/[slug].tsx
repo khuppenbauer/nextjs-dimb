@@ -1,8 +1,8 @@
 import React from 'react';
 import getConfig from 'next/config';
 import axios from 'axios';
-import MapComponent from '../../components/Map'
-import GeoJsonFeatureCollectionType from '../../interfaces/geoJsonFeatureCollection';
+import MapComponent from '../../../components/Map'
+import GeoJsonFeatureCollectionType from '../../../interfaces/geoJsonFeatureCollection';
 
 interface Result {
   data: GeoJsonFeatureCollectionType;
@@ -27,16 +27,23 @@ const Maps = ({ data }: Result) => {
   )
 }
 
-export async function getServerSideProps({ params }: Params) {
+export async function getStaticProps({ params }: Params) {
   const { slug } = params;
-  const property = slug[0];
-  const name = slug[1];
-  const url = `${baseUrl}/api/areas?${property}=${name}&simplify=0.001`;
+  const url = `${baseUrl}/api/areas?bl=${slug}&simplify=0.001`;
   const { data }: Result = await axios.get(url)
   return {
     props: {
       data,
     },
+  }
+}
+
+export async function getStaticPaths() {
+  const url = `${baseUrl}/api/paths?property=bundesland`;
+  const { data }: any = await axios.get(url);
+  return {
+    paths: data.map((item: any) => ({ params: { slug: item.bundesland } })),
+    fallback: false,
   }
 }
 
