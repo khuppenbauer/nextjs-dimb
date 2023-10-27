@@ -14,6 +14,7 @@ interface Result {
 
 interface PopupContent {
   name?: string;
+  url?: string;
   description?: string;
   logo?: string;
   email?: string;
@@ -41,7 +42,7 @@ function MapComponent({ data }: Result) {
           }),
           stroke: new Stroke({
             color: 'blue',
-            width: 2,
+            width: 3,
           }),
         }),
       });
@@ -80,7 +81,8 @@ function MapComponent({ data }: Result) {
       if (feature) {
         const properties = feature.getProperties();
         const { 
-          name, 
+          name,
+          url,
           activities, 
           'logo-url': logo, 
           contact: email, 
@@ -89,6 +91,7 @@ function MapComponent({ data }: Result) {
         } = properties;
         const popupContent = {
           name,
+          url,
           description,
           logo: logo?.thumb || logo || '',
           activities,
@@ -113,7 +116,7 @@ function MapComponent({ data }: Result) {
               </div>
             )}
             <h2 className="text-lg text-gray-900 font-medium title-font mb-2">{popupContent.name}</h2>
-            {popupContent.description && (<p className="leading-relaxed text-base">{popupContent.description}</p>)}
+            {popupContent.description && (<p className="leading-relaxed text-base"><div dangerouslySetInnerHTML={{ __html: popupContent.description }} /></p>)}
             {popupContent.activities && (
               <p className="leading-relaxed text-base">{popupContent.activities.join(', ')}</p>
             )}
@@ -123,7 +126,14 @@ function MapComponent({ data }: Result) {
                   {popupContent.email}
                 </span>
                 <span className="text-gray-400 inline-flex items-center leading-none text-base">
-                  {popupContent.website}
+                  <a href={popupContent.website} target="_blank">{popupContent.website}</a>
+                </span>
+              </div>
+            )}
+            {(popupContent.url) && (
+              <div className="text-center leading-none flex w-full">
+                <span className="text-gray-400 mr-3 inline-flex items-center leading-none text-base pr-3 py-1 border-gray-200">
+                  <a href={popupContent.url} target="_top">DIMB Website</a>
                 </span>
               </div>
             )}
