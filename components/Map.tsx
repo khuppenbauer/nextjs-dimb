@@ -3,6 +3,8 @@ import { Map, View } from 'ol';
 import GeoJSON from 'ol/format/GeoJSON';
 import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
 import { OSM, Vector as VectorSource } from 'ol/source';
+import { Select } from 'ol/interaction';
+import { defaults as defaultInteractions } from 'ol/interaction';
 import { transformExtent } from 'ol/proj';
 import { Style, Fill, Stroke } from 'ol/style';
 import "ol/ol.css";
@@ -32,19 +34,35 @@ function MapComponent({ data }: Result) {
 
   useEffect(() => {
     if (mapElement.current) {
+      const style = new Style({
+        fill: new Fill({
+          color: 'rgba(0, 94, 169, 0.2)',
+        }),
+        stroke: new Stroke({
+          color: 'rgba(0, 94, 169, 0.7)',
+          width: 2,
+        }),
+      });
+    
+      const selectStyle = new Style({
+        fill: new Fill({
+          color: 'rgba(0, 94, 169, 0.4)',
+        }),
+        stroke: new Stroke({
+          color: 'rgba(0, 94, 169, 0.7)',
+          width: 2,
+        }),
+      });
+      
       const vectorLayer = new VectorLayer({
         source: new VectorSource({
           features: new GeoJSON({ featureProjection: 'EPSG:3857' }).readFeatures(data),
         }),
-        style: new Style({
-          fill: new Fill({
-            color: 'rgba(0, 0, 255, 0.2)',
-          }),
-          stroke: new Stroke({
-            color: 'blue',
-            width: 3,
-          }),
-        }),
+        style,
+      });
+
+      const selectInteraction = new Select({
+        style: selectStyle,
       });
 
       const newMap = new Map({
@@ -55,6 +73,7 @@ function MapComponent({ data }: Result) {
           }),
           vectorLayer,
         ],
+        interactions: defaultInteractions().extend([selectInteraction]),
       });
 
       const view: View = newMap.getView();
