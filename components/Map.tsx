@@ -198,16 +198,17 @@ function MapComponent({ data }: Result) {
   return (
     <div>
       <div id="map" ref={mapElement} style={{ height: '100vh' }} />
-      <div id="popup" className="ol-popup absolute m-6 right-0 bottom-0">
+      <div id="popup" className="ol-popup absolute m-6 right-0 top-0">
         {popupContent.name && (
           <div className="border border-gray-200 p-6 rounded-lg bg-white">
+            <button className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 cursor-pointer" onClick={() => setPopupContent({})}>&times;</button>
             {popupContent.logo && (
               <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 mb-4">
                 <img src={popupContent.logo} width={40} height={40} alt={popupContent.name} />
               </div>
             )}
             <h2 className="text-lg text-gray-900 font-medium title-font mb-2">{popupContent.name}</h2>
-            {popupContent.description && (<p className="leading-relaxed text-base"><div dangerouslySetInnerHTML={{ __html: popupContent.description }} /></p>)}
+            {popupContent.description && (<div dangerouslySetInnerHTML={{ __html: popupContent.description }} />)}
             {popupContent.activities && (
               <p className="leading-relaxed text-base">{popupContent.activities.join(', ')}</p>
             )}
