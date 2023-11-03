@@ -11,7 +11,6 @@ import Feature from 'ol/Feature.js';
 import Point from 'ol/geom/Point.js';
 import Geolocation from 'ol/Geolocation';
 import { Control } from 'ol/control';
-import Overlay from 'ol/Overlay';
 import "ol/ol.css";
 import GeoJsonFeatureCollectionType from '../interfaces/geoJsonFeatureCollection';
 
@@ -36,7 +35,6 @@ function MapComponent({ data }: Result) {
   const mapElement = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map>();
   mapRef.current = map;
-  const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (mapElement.current) {
@@ -157,49 +155,6 @@ function MapComponent({ data }: Result) {
         size: newMap.getSize()!,
         padding: [50, 50, 50, 50],
       });
-
-      const overlay = new Overlay({
-        element: overlayRef.current as HTMLElement,
-        positioning: 'bottom-center',
-        stopEvent: false,
-      });
-
-      newMap.addOverlay(overlay);
-
-      const handleMapClick = (event: any): void => {
-        if (mapRef.current) {
-          const feature = mapRef.current.forEachFeatureAtPixel(event.pixel, (feature) => {
-            return feature;
-          });
-          if (feature) {
-            const properties = feature.getProperties();
-            const { 
-              name,
-              url,
-              activities, 
-              'logo-url': logo, 
-              contact: email, 
-              description, 
-              'site-url': website  
-            } = properties;
-            const popupContent = {
-              name,
-              url,
-              description,
-              logo: logo?.thumb || logo || '',
-              activities,
-              email,
-              website,
-            }
-            const coordinates = event.coordinate;
-            overlay.setPosition(coordinates);
-            setPopupContent(popupContent);
-          } else {
-            setPopupContent({});
-          }
-        }
-      };
-
       newMap.on('click', handleMapClick);
       setMap(newMap);
 
@@ -209,20 +164,50 @@ function MapComponent({ data }: Result) {
     }
   }, [data]);
 
+  const handleMapClick = (event: any): void => {
+    if (mapRef.current) {
+      const feature = mapRef.current.forEachFeatureAtPixel(event.pixel, (feature) => {
+        return feature;
+      });
+      if (feature) {
+        const properties = feature.getProperties();
+        const { 
+          name,
+          url,
+          activities, 
+          'logo-url': logo, 
+          contact: email, 
+          description, 
+          'site-url': website  
+        } = properties;
+        const popupContent = {
+          name,
+          url,
+          description,
+          logo: logo?.thumb || logo || '',
+          activities,
+          email,
+          website,
+        }
+        setPopupContent(popupContent);
+      } else {
+        setPopupContent({});
+      }
+    }
+  };
   return (
     <div>
       <div id="map" ref={mapElement} style={{ height: '100vh' }} />
-      <div id="popup" ref={overlayRef} className="ol-popup min-w-max">
+      <div id="popup" className="ol-popup absolute m-6 right-0 bottom-0">
         {popupContent.name && (
-          <div className="border border-gray-200 p-3 pr-6 rounded-lg bg-white">
-            <button className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 cursor-pointer" onClick={() => setPopupContent({})}>&times;</button>
+          <div className="border border-gray-200 p-6 rounded-lg bg-white">
             {popupContent.logo && (
               <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 mb-4">
                 <img src={popupContent.logo} width={40} height={40} alt={popupContent.name} />
               </div>
             )}
             <h2 className="text-lg text-gray-900 font-medium title-font mb-2">{popupContent.name}</h2>
-            {popupContent.description && (<div dangerouslySetInnerHTML={{ __html: popupContent.description }} />)}
+            {popupContent.description && (<p className="leading-relaxed text-base"><div dangerouslySetInnerHTML={{ __html: popupContent.description }} /></p>)}
             {popupContent.activities && (
               <p className="leading-relaxed text-base">{popupContent.activities.join(', ')}</p>
             )}
