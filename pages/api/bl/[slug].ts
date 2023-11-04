@@ -13,24 +13,29 @@ export default async function handler(
   res: NextApiResponse | any
 ) {
   const { method, query: { slug } } = req;
-  if (method === 'GET') {
-    if (slug) {
-      const data = await sql<Result[]>`
-        SELECT meta, geometry FROM dimb_ig WHERE name IN (
-          SELECT dimb_ig FROM dimb_ig_plz WHERE bundesland = ${slug} GROUP BY dimb_ig, bundesland
-        )
-      `;
-
-      const features: GeoJsonFeatureType[] = data.map((item) => {
-        const { meta, geometry } = item;
-        geometry.properties = meta;
-        return geometry;
-      })
-      
-      const geoJson = featureCollection(features);
-
-      return res.status(200).send(geoJson);
-    }
+  switch (method) {
+    case 'GET':
+      if (slug) {
+        const data = await sql<Result[]>`
+          SELECT meta, geometry FROM dimb_ig WHERE name IN (
+            SELECT dimb_ig FROM dimb_ig_plz WHERE bundesland = ${slug} GROUP BY dimb_ig, bundesland
+          )
+        `;
+        const features: GeoJsonFeatureType[] = data.map((item) => {
+          const { meta, geometry } = item;
+          geometry.properties = meta;
+          return geometry;
+        })
+        const geoJson = featureCollection(features);
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET');
+        return res.status(200).send(geoJson);
+      }
+    case 'OPTIONS':
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET');
+      return res.status(200).send('Ok');
+    default:
+      return res.status(500);
   }
-  return res.status(500);
 }

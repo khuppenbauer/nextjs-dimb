@@ -13,19 +13,26 @@ export default async function handler(
   res: NextApiResponse | any
 ) {
   const { method } = req;
-  if (method === 'GET') {
-    const data = await sql<Result[]>`
-      SELECT meta, geometry FROM dimb_ig
-    `;
-    const features: GeoJsonFeatureType[] = data.map((item) => {
-      const { meta, geometry } = item;
-      geometry.properties = meta;
-      return geometry;
-    })
-    
-    const geoJson = featureCollection(features);
-    
-    return res.status(200).send(geoJson);
+  switch (method) {
+    case 'GET':
+      const data = await sql<Result[]>`
+        SELECT meta, geometry FROM dimb_ig
+      `;
+      const features: GeoJsonFeatureType[] = data.map((item) => {
+        const { meta, geometry } = item;
+        geometry.properties = meta;
+        return geometry;
+      })
+      const geoJson = featureCollection(features);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET');
+      return res.status(200).send(geoJson);
+    case 'OPTIONS':
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET');
+      return res.status(200).send('Ok');
+      break;
+    default:
+      return res.status(500);
   }
-  return res.status(500);
 }
