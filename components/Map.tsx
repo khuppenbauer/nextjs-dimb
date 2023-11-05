@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Map, View } from 'ol';
 import GeoJSON from 'ol/format/GeoJSON';
 import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
@@ -12,11 +12,7 @@ import Point from 'ol/geom/Point.js';
 import Geolocation from 'ol/Geolocation';
 import { Control } from 'ol/control';
 import "ol/ol.css";
-import GeoJsonFeatureCollectionType from '../interfaces/geoJsonFeatureCollection';
-
-interface Result {
-  data: GeoJsonFeatureCollectionType;
-}
+import MapProps from '../interfaces/mapProps';
 
 interface PopupContent {
   name?: string;
@@ -28,139 +24,83 @@ interface PopupContent {
   activities?: string[];
 }
 
-function MapComponent({ data }: Result) {
-  const [ map, setMap ] = useState<Map>();
+function MapComponent({ url, properties }: MapProps) {
   const [ popupContent, setPopupContent ] = useState<PopupContent>({});
 
-  const mapElement = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<Map>();
-  mapRef.current = map;
-
   useEffect(() => {
-    if (mapElement.current) {
-      const style = new Style({
-        fill: new Fill({
-          color: 'rgba(0, 94, 169, 0.2)',
-        }),
-        stroke: new Stroke({
-          color: 'rgba(0, 94, 169, 0.7)',
-          width: 2,
-        }),
-      });
+    const style = new Style({
+      fill: new Fill({
+        color: 'rgba(0, 94, 169, 0.2)',
+      }),
+      stroke: new Stroke({
+        color: 'rgba(0, 94, 169, 0.7)',
+        width: 2,
+      }),
+    });
+  
+    const selectStyle = new Style({
+      fill: new Fill({
+        color: 'rgba(0, 94, 169, 0.4)',
+      }),
+      stroke: new Stroke({
+        color: 'rgba(0, 94, 169, 0.7)',
+        width: 2,
+      }),
+    });
+
+    const source = new VectorSource({
+      format: new GeoJSON,
+      url,
+    });
     
-      const selectStyle = new Style({
-        fill: new Fill({
-          color: 'rgba(0, 94, 169, 0.4)',
+    const vectorLayer = new VectorLayer({
+      source,
+      style,
+    });
+
+    const selectInteraction = new Select({
+      style: selectStyle,
+    });
+
+    const map = new Map({
+      target: 'map',
+      layers: [
+        new TileLayer({
+          source: new OSM(),
         }),
-        stroke: new Stroke({
-          color: 'rgba(0, 94, 169, 0.7)',
-          width: 2,
-        }),
-      });
+        vectorLayer,
+      ],
+      view: new View({
+        center: [0, 0],
+        zoom: 2,
+      }),
+      interactions: defaultInteractions().extend([selectInteraction]),
+    });
 
-      const positionFeature = new Feature();
-      positionFeature.setStyle(
-        new Style({
-          image: new Circle({
-            radius: 6,
-            fill: new Fill({
-              color: '#005ea9',
-            }),
-            stroke: new Stroke({
-              color: '#fff',
-              width: 2,
-            }),
-          }),
-        })
-      );
-
-      const features = new GeoJSON({ featureProjection: 'EPSG:3857' }).readFeatures(data);
-      features.push(positionFeature);
-      
-      const vectorLayer = new VectorLayer({
-        source: new VectorSource({
-          features,
-        }),
-        style,
-      });
-
-      const selectInteraction = new Select({
-        style: selectStyle,
-      });
-
-      const newMap = new Map({
-        target: mapElement.current,
-        layers: [
-          new TileLayer({
-            source: new OSM(),
-          }),
-          vectorLayer,
-        ],
-        interactions: defaultInteractions().extend([selectInteraction]),
-      });
-
-      class GeolocationControl extends Control {
-        constructor() {
-          const button = document.createElement('button');
-          button.innerHTML = '&#x2316';
-      
-          const element = document.createElement('div');
-          element.className = 'ol-unselectable ol-control';
-          element.style.left = '0.5em';
-          element.style.top = '5em';
-          element.appendChild(button);
-      
-          super({
-            element: element,
-          });
-      
-          button.addEventListener('click', this.handleGeolocation.bind(this), false);
-        }
-
-        handleGeolocation = () => {
-          const geolocation = new Geolocation({
-            tracking: true,
-            trackingOptions: {
-              enableHighAccuracy: true,
-            },
-            projection: newMap.getView().getProjection(),
-          });
-          geolocation.on('change:position', () => {
-            const coordinates = geolocation.getPosition();
-            if (coordinates) {
-              const pixel = newMap.getPixelFromCoordinate(coordinates);
-              const feature = newMap.forEachFeatureAtPixel(pixel, (feature) => {
-                return feature;
-              });
-              newMap.getView().setCenter(coordinates);
-              newMap.getView().setZoom(9);
-              positionFeature.setGeometry(new Point(coordinates));
-            }
-          });
-          geolocation.setTracking(true);
-        };
-      }
-      newMap.addControl(new GeolocationControl());
-    
-      const view: View = newMap.getView();
-      const { bbox } = data.properties;
+    if (properties) {
+      const view: View = map.getView();
+      const { bbox } = properties;
       const bboxTransformed = transformExtent(bbox, 'EPSG:4326', 'EPSG:3857');
       view.fit(bboxTransformed, {
-        size: newMap.getSize()!,
+        size: map.getSize()!,
         padding: [50, 50, 50, 50],
       });
-      newMap.on('click', handleMapClick);
-      setMap(newMap);
 
-      return () => {
-        newMap.setTarget('');
-      };
     }
-  }, [data]);
 
-  const handleMapClick = (event: any): void => {
-    if (mapRef.current) {
-      const feature = mapRef.current.forEachFeatureAtPixel(event.pixel, (feature) => {
+    source.once('change', () => {
+      if (source.getState() === 'ready') {
+        const extent = source.getExtent();
+
+        if (!extent || extent[0] === Infinity) {
+          return;
+        }
+        map.getView().fit(extent, { padding: [50, 50, 50, 50] });
+      }
+    });
+
+    map.on('click', (event: any): void => {
+      const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => {
         return feature;
       });
       if (feature) {
@@ -187,11 +127,70 @@ function MapComponent({ data }: Result) {
       } else {
         setPopupContent({});
       }
+    });
+
+    class GeolocationControl extends Control {
+      constructor() {
+        const button = document.createElement('button');
+        button.innerHTML = '&#x2316';
+    
+        const element = document.createElement('div');
+        element.className = 'ol-unselectable ol-control';
+        element.style.right = '0.5em';
+        element.style.top = '0.5em';
+        element.appendChild(button);
+    
+        super({
+          element: element,
+        });
+    
+        button.addEventListener('click', this.handleGeolocation.bind(this), false);
+      }
+
+      handleGeolocation = () => {
+        const geolocation = new Geolocation({
+          tracking: true,
+          trackingOptions: {
+            enableHighAccuracy: true,
+          },
+          projection: map.getView().getProjection(),
+        });
+        geolocation.on('change:position', () => {
+          const coordinate = geolocation.getPosition();
+          if (coordinate) {
+            const geolocationStyle = new Style({
+              image: new Circle({
+                radius: 6,
+                fill: new Fill({
+                  color: '#005ea9',
+                }),
+                stroke: new Stroke({
+                  color: '#fff',
+                  width: 2,
+                }),
+              }),
+            });
+            const geolocationFeature = new Feature({
+              geometry: new Point(coordinate)
+            });
+            geolocationFeature.setStyle(geolocationStyle);
+            source.addFeature(geolocationFeature);
+            map.getView().setCenter(coordinate);
+            map.getView().setZoom(9);
+          }
+        });
+      };
     }
-  };
+    map.addControl(new GeolocationControl());
+  
+    return () => {
+      map.setTarget('');
+    };
+  }, [url, properties]);
+
   return (
     <div>
-      <div id="map" ref={mapElement} style={{ height: '100vh' }} />
+      <div id="map" style={{ height: '100vh' }} />
       <div id="popup" className="ol-popup absolute m-6 right-0 top-0">
         {popupContent.name && (
           <div className="border border-gray-200 p-6 rounded-lg bg-white">

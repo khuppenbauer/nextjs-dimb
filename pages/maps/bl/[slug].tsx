@@ -3,6 +3,7 @@ import getConfig from 'next/config';
 import axios from 'axios';
 import MapComponent from '../../../components/Map'
 import GeoJsonFeatureCollectionType from '../../../interfaces/geoJsonFeatureCollection';
+import MapProps from '../../../interfaces/mapProps';
 
 interface Result {
   data: GeoJsonFeatureCollectionType;
@@ -18,22 +19,20 @@ const {
   publicRuntimeConfig: { baseUrl },
 } = getConfig();
 
-const Maps = ({ data }: Result) => {
-  if (!data) {
-    return null;
-  }
+const Maps = ({ url, properties }: MapProps) => {
   return (
-    <MapComponent data={data} />
+    <MapComponent url={url} properties={properties} />
   )
 }
 
 export async function getStaticProps({ params }: Params) {
   const { slug } = params;
   const url = `${baseUrl}/api/bl/${slug}`;
-  const { data }: Result = await axios.get(url)
+  const { data: { properties } }: Result = await axios.get(url)
   return {
     props: {
-      data,
+      url,
+      properties,
     },
   }
 }
