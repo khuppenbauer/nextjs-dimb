@@ -21,7 +21,7 @@ const {
 
 const Maps = ({ url, properties }: MapProps) => {
   return (
-    <MapComponent url={url} properties={properties} />
+    <MapComponent url={url} properties={properties} controls={[]} />
   )
 }
 

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import getConfig from 'next/config';
 import { Map, View } from 'ol';
 import GeoJSON from 'ol/format/GeoJSON';
 import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
 import { OSM, Vector as VectorSource } from 'ol/source';
 import { Select } from 'ol/interaction';
 import { defaults as defaultInteractions } from 'ol/interaction';
-import { transformExtent } from 'ol/proj';
+import { transformExtent, fromLonLat } from 'ol/proj';
 import { Circle, Style, Fill, Stroke } from 'ol/style';
 import Feature from 'ol/Feature.js';
 import Point from 'ol/geom/Point.js';
@@ -24,7 +25,11 @@ interface PopupContent {
   activities?: string[];
 }
 
-function MapComponent({ url, properties }: MapProps) {
+const {
+  publicRuntimeConfig: { baseUrl },
+} = getConfig();
+
+function MapComponent({ url, properties, controls }: MapProps) {
   const [ popupContent, setPopupContent ] = useState<PopupContent>({});
 
   useEffect(() => {
@@ -62,6 +67,21 @@ function MapComponent({ url, properties }: MapProps) {
       style: selectStyle,
     });
 
+    const locationStyle = new Style({
+      image: new Circle({
+        radius: 6,
+        fill: new Fill({
+          color: '#005ea9',
+        }),
+        stroke: new Stroke({
+          color: '#fff',
+          width: 2,
+        }),
+      }),
+    });
+    const locationFeature = new Feature();
+    locationFeature.setStyle(locationStyle);
+
     const map = new Map({
       target: 'map',
       layers: [
@@ -96,6 +116,7 @@ function MapComponent({ url, properties }: MapProps) {
           return;
         }
         map.getView().fit(extent, { padding: [50, 50, 50, 50] });
+        source.addFeature(locationFeature);
       }
     });
 
@@ -129,64 +150,100 @@ function MapComponent({ url, properties }: MapProps) {
       }
     });
 
-    class GeolocationControl extends Control {
-      constructor() {
-        const button = document.createElement('button');
-        button.innerHTML = '&#x2316';
-    
-        const element = document.createElement('div');
-        element.className = 'ol-unselectable ol-control';
-        element.style.right = '0.5em';
-        element.style.top = '0.5em';
-        element.appendChild(button);
-    
-        super({
-          element: element,
-        });
-    
-        button.addEventListener('click', this.handleGeolocation.bind(this), false);
+    if (controls.includes('locate')) {
+      class GeolocationControl extends Control {
+        constructor() {
+          const button = document.createElement('button');
+          button.innerHTML = '◎';
+      
+          const element = document.createElement('div');
+          element.className = 'ol-unselectable ol-control locate';
+          element.style.left = '0.5em';
+          element.style.top = '5.5em';
+          element.appendChild(button);
+      
+          super({
+            element: element,
+          });
+      
+          button.addEventListener('click', this.handleGeolocation.bind(this), false);
+        }
+  
+        handleGeolocation = () => {
+          const geolocation = new Geolocation({
+            tracking: true,
+            trackingOptions: {
+              enableHighAccuracy: true,
+            },
+            projection: map.getView().getProjection(),
+          });
+          geolocation.on('change:position', () => {
+            const coordinate = geolocation.getPosition();
+            if (coordinate) {
+              map.getView().setCenter(coordinate);
+              map.getView().setZoom(9);
+              locationFeature.setGeometry(new Point(coordinate));
+            }
+          });
+        };
       }
-
-      handleGeolocation = () => {
-        const geolocation = new Geolocation({
-          tracking: true,
-          trackingOptions: {
-            enableHighAccuracy: true,
-          },
-          projection: map.getView().getProjection(),
-        });
-        geolocation.on('change:position', () => {
-          const coordinate = geolocation.getPosition();
-          if (coordinate) {
-            const geolocationStyle = new Style({
-              image: new Circle({
-                radius: 6,
-                fill: new Fill({
-                  color: '#005ea9',
-                }),
-                stroke: new Stroke({
-                  color: '#fff',
-                  width: 2,
-                }),
-              }),
-            });
-            const geolocationFeature = new Feature({
-              geometry: new Point(coordinate)
-            });
-            geolocationFeature.setStyle(geolocationStyle);
-            source.addFeature(geolocationFeature);
-            map.getView().setCenter(coordinate);
-            map.getView().setZoom(9);
-          }
-        });
-      };
+      map.addControl(new GeolocationControl());
     }
-    map.addControl(new GeolocationControl());
+
+    if (controls.includes('search')) {
+      class SearchControl extends Control {
+        constructor() {
+          const button = document.createElement('button');
+          button.innerHTML = '&#128269;';
+          const input = document.createElement('input');
+          input.id = 'search-box';
+          input.value = '';
+          input.placeholder = 'PLZ';
+          input.style.float = 'left';
+          input.style.margin = '1px';
+          input.style.width = '75px';
+          input.style.height = '2.05em';
+          input.style.padding = '5px';
+      
+          const element = document.createElement('div');
+          element.className = 'ol-unselectable ol-control search';
+          element.style.left = '3.5em';
+          element.style.top = '0.5em';
+          element.appendChild(input);
+          element.appendChild(button);
+      
+          super({
+            element: element,
+          });
+          input.addEventListener('keydown', this.handleSearch.bind(this), false);    
+          button.addEventListener('click', this.handleSearch.bind(this), false);
+        }
+  
+        handleSearch = (e: any) => {
+          if (e.key === 'Enter' || e.type === 'click') {
+            const pcode = (document.getElementById('search-box') as HTMLInputElement).value;
+            fetch(`${baseUrl}/api/pcodes/${pcode}`)
+              .then(function (response) {
+                return response.json();
+              })
+              .then((json) => {
+                const { lat, lon } = json;
+                const coordinate = fromLonLat([lon, lat], 'EPSG:3857');
+                map.getView().setCenter(coordinate);
+                map.getView().setZoom(9);
+                (document.getElementById('search-box') as HTMLInputElement).value = '';
+                locationFeature.setGeometry(new Point(coordinate));
+              });
+          }
+        };
+      }
+      map.addControl(new SearchControl());
+    }
   
     return () => {
       map.setTarget('');
     };
-  }, [url, properties]);
+  }, [url, properties, controls]);
 
   return (
     <div>

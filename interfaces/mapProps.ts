@@ -1,6 +1,7 @@
 type MapProps = {
   url: string;
-  properties?: any; 
+  properties?: any;
+  controls: string[];
 }
 
 export default MapProps;
