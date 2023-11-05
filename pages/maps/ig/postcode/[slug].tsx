@@ -1,9 +1,9 @@
 import React from 'react';
 import getConfig from 'next/config';
 import axios from 'axios';
-import MapComponent from '../../../components/Map'
-import GeoJsonFeatureCollectionType from '../../../interfaces/geoJsonFeatureCollection';
-import MapProps from '../../../interfaces/mapProps';
+import MapComponent from '../../../../components/Map'
+import GeoJsonFeatureCollectionType from '../../../../interfaces/geoJsonFeatureCollection';
+import MapProps from '../../../../interfaces/mapProps';
 
 interface Result {
   data: GeoJsonFeatureCollectionType;
@@ -21,13 +21,13 @@ const {
 
 const Maps = ({ url, properties }: MapProps) => {
   return (
-    <MapComponent url={url} properties={properties} controls={[]} label={false} />
+    <MapComponent url={url} properties={properties} controls={['search']} label={true} />
   )
 }
 
 export async function getStaticProps({ params }: Params) {
   const { slug } = params;
-  const url = `${baseUrl}/api/ig/${slug}`;
+  const url = `${baseUrl}/api/ig/postcode/${slug}`;
   const { data: { properties } }: Result = await axios.get(url)
   return {
     props: {

@@ -7,7 +7,7 @@ import { OSM, Vector as VectorSource } from 'ol/source';
 import { Select } from 'ol/interaction';
 import { defaults as defaultInteractions } from 'ol/interaction';
 import { transformExtent, fromLonLat } from 'ol/proj';
-import { Circle, Style, Fill, Stroke } from 'ol/style';
+import { Circle, Style, Fill, Stroke, Text } from 'ol/style';
 import Feature from 'ol/Feature.js';
 import Point from 'ol/geom/Point.js';
 import Geolocation from 'ol/Geolocation';
@@ -29,11 +29,25 @@ const {
   publicRuntimeConfig: { baseUrl },
 } = getConfig();
 
-function MapComponent({ url, properties, controls }: MapProps) {
+function MapComponent({ url, properties, controls, label }: MapProps) {
   const [ popupContent, setPopupContent ] = useState<PopupContent>({});
 
   useEffect(() => {
-    const style = new Style({
+
+    const labelStyle = new Style({
+      text: new Text({
+        font: '11px Calibri,sans-serif',
+        fill: new Fill({
+          color: 'rgba(0, 94, 169)',
+        }),
+        stroke: new Stroke({
+          color: 'rgba(0, 94, 169)',
+          width: 1,
+        }),
+      }),
+    });
+
+    const polygonStyle = new Style({
       fill: new Fill({
         color: 'rgba(0, 94, 169, 0.2)',
       }),
@@ -42,6 +56,8 @@ function MapComponent({ url, properties, controls }: MapProps) {
         width: 2,
       }),
     });
+
+    const style = label ? [polygonStyle, labelStyle] : [polygonStyle];
   
     const selectStyle = new Style({
       fill: new Fill({
@@ -60,7 +76,11 @@ function MapComponent({ url, properties, controls }: MapProps) {
     
     const vectorLayer = new VectorLayer({
       source,
-      style,
+      style: function (feature) {
+        const label = feature.get('name').split(' ').join('\n');
+        labelStyle.getText().setText(label);
+        return style;
+      },
     });
 
     const selectInteraction = new Select({
@@ -94,7 +114,7 @@ function MapComponent({ url, properties, controls }: MapProps) {
         center: [0, 0],
         zoom: 2,
       }),
-      interactions: defaultInteractions().extend([selectInteraction]),
+      interactions: label ? defaultInteractions() : defaultInteractions().extend([selectInteraction]),
     });
 
     if (properties) {
@@ -121,6 +141,9 @@ function MapComponent({ url, properties, controls }: MapProps) {
     });
 
     map.on('click', (event: any): void => {
+      if (label) {
+        return;
+      }
       const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => {
         return feature;
       });
@@ -243,7 +266,7 @@ function MapComponent({ url, properties, controls }: MapProps) {
     return () => {
       map.setTarget('');
     };
-  }, [url, properties, controls]);
+  }, [url, properties, controls, label]);
 
   return (
     <div>
