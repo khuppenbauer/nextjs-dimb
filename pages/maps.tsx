@@ -20,7 +20,7 @@ const Maps = ({ url, properties }: MapProps) => {
 }
 
 export async function getStaticProps() {
-  const url = `${baseUrl}/api/igs`;
+  const url = `${baseUrl}/api/igs?simplify=0.005`;
   const { data: { properties } }: Result = await axios.get(url)
   return {
     props: {

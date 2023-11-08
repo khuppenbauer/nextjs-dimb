@@ -27,7 +27,7 @@ const Maps = ({ url, properties }: MapProps) => {
 
 export async function getStaticProps({ params }: Params) {
   const { slug } = params;
-  const url = `${baseUrl}/api/bl/${slug}`;
+  const url = `${baseUrl}/api/bl/${slug}?simplify=0.005`;
   const { data: { properties } }: Result = await axios.get(url)
   return {
     props: {
