@@ -4,6 +4,7 @@ const nextConfig = {
   output: 'export',
   publicRuntimeConfig: {
     baseUrl: process.env.BASE_URL,
+    apiBaseUrl: process.env.API_BASE_URL,
   },
 }
 

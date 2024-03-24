@@ -5,7 +5,7 @@ import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 
 const {
-  publicRuntimeConfig: { baseUrl },
+  publicRuntimeConfig: { apiBaseUrl },
 } = getConfig();
 
 class SearchControl extends Control {
@@ -46,12 +46,12 @@ class SearchControl extends Control {
     handleSearch = (e: any) => {
       if (e.key === 'Enter' || e.type === 'click') {
         const pcode = (document.getElementById('search-box') as HTMLInputElement).value;
-        fetch(`${baseUrl}/api/pcodes/${pcode}`)
+        fetch(`${apiBaseUrl}/api/postcodes/${pcode}`)
           .then(function (response) {
             return response.json();
           })
           .then((json) => {
-            const { lat, lon } = json;
+            const { geo_point_2d: { lat, lon } } = json;
             const coordinate = fromLonLat([lon, lat], 'EPSG:3857');
             this.getMap()?.getView().setCenter(coordinate);
             this.getMap()?.getView().setZoom(9);
