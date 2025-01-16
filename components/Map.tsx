@@ -1,12 +1,13 @@
+"use client";
+
 import React, { useEffect, useState } from 'react';
 import { Map, View, Feature } from 'ol';
 import GeoJSON from 'ol/format/GeoJSON';
 import { Select, defaults as defaultInteractions } from 'ol/interaction';
 import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
-import { transformExtent } from 'ol/proj';
 import { OSM, Vector as VectorSource } from 'ol/source';
 import "ol/ol.css";
-import MapProps from '../interfaces/mapProps';
+import MapProps from '@/interfaces/mapProps';
 import MapStyles from './MapStyles';
 import GeolocationControl from './GeolocationControl';
 import SearchControl from './SearchControl';
@@ -21,7 +22,7 @@ interface PopupContent {
   activities?: string[];
 }
 
-function MapComponent({ url, properties, controls, label }: MapProps) {
+function MapComponent({ baseUrl, url, controls, label }: MapProps) {
   const [ popupContent, setPopupContent ] = useState<PopupContent>({});
 
   useEffect(() => {
@@ -30,14 +31,14 @@ function MapComponent({ url, properties, controls, label }: MapProps) {
 
     const source = new VectorSource({
       format: new GeoJSON,
-      url,
+      url
     });
     
     const vectorLayer = new VectorLayer({
       source,
       style: function (feature) {
         const label = feature.get('name').split(' ').join('\n');
-        labelStyle.getText().setText(label);
+        labelStyle.getText()?.setText(label);
         return style;
       },
     });
@@ -63,17 +64,6 @@ function MapComponent({ url, properties, controls, label }: MapProps) {
       }),
       interactions: defaultInteractions().extend([selectInteraction]),
     });
-
-    if (properties) {
-      const view: View = map.getView();
-      const { bbox } = properties;
-      const bboxTransformed = transformExtent(bbox, 'EPSG:4326', 'EPSG:3857');
-      view.fit(bboxTransformed, {
-        size: map.getSize()!,
-        padding: [50, 50, 50, 50],
-      });
-
-    }
 
     source.once('change', () => {
       if (source.getState() === 'ready') {
@@ -122,13 +112,13 @@ function MapComponent({ url, properties, controls, label }: MapProps) {
     }
 
     if (controls.includes('search')) {
-      map.addControl(new SearchControl(locationFeature));
+      map.addControl(new SearchControl(locationFeature, baseUrl));
     }
   
     return () => {
       map.setTarget('');
     };
-  }, [url, properties, controls, label]);
+  }, [baseUrl, url, controls, label]);
 
   return (
     <div>

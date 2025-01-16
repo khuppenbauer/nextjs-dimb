@@ -1,18 +1,14 @@
-import getConfig from 'next/config';
 import { Feature } from 'ol';
 import { Control } from 'ol/control';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 
-const {
-  publicRuntimeConfig: { apiBaseUrl },
-} = getConfig();
-
 class SearchControl extends Control {
 
   private locationFeature: Feature;
+  private url: string;
 
-    constructor(locationFeature: Feature) {
+    constructor(locationFeature: Feature, url: string) {
       const button = document.createElement('button');
       button.innerHTML = '&#128269;';
       
@@ -38,6 +34,7 @@ class SearchControl extends Control {
       });
 
       this.locationFeature = locationFeature; // Store the reference to the map
+      this.url = url; 
 
       input.addEventListener('keydown', this.handleSearch.bind(this), false);    
       button.addEventListener('click', this.handleSearch.bind(this), false);
@@ -46,12 +43,12 @@ class SearchControl extends Control {
     handleSearch = (e: any) => {
       if (e.key === 'Enter' || e.type === 'click') {
         const pcode = (document.getElementById('search-box') as HTMLInputElement).value;
-        fetch(`${apiBaseUrl}/api/postcodes/${pcode}`)
+        fetch(`${this.url}/api/postcodes/${pcode}/point`)
           .then(function (response) {
             return response.json();
           })
           .then((json) => {
-            const { geo_point_2d: { lat, lon } } = json;
+            const { lat, lon } = json;
             const coordinate = fromLonLat([lon, lat], 'EPSG:3857');
             this.getMap()?.getView().setCenter(coordinate);
             this.getMap()?.getView().setZoom(9);

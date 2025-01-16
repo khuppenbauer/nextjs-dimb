@@ -1,10 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'export',
   publicRuntimeConfig: {
+    metaDataUrl: process.env.METADATA_URL,
     baseUrl: process.env.BASE_URL,
-    apiBaseUrl: process.env.API_BASE_URL,
   },
 }
 
