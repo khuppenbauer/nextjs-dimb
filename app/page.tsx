@@ -1,14 +1,15 @@
-import React from 'react';
-import getConfig from 'next/config';
+'use client'
+
+import { useSearchParams } from 'next/navigation'
 import MapComponent from '../components/Map'
 
-const {
-  publicRuntimeConfig: { baseUrl },
-} = getConfig();
+export default function Home() {
+  const searchParams = useSearchParams()
+  const simplified = searchParams.get('simplified') || 0.005
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
 
-export default async function Home() {
-  const url =  `${baseUrl}/api/igs?simplified=0.005`
-  console.log(url)
+  const url = `${baseUrl}/api/igs?simplified=${simplified}`
+
   return (
     <MapComponent baseUrl={baseUrl} url={url} controls={['search', 'locate']} label={false} />
   )
