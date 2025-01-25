@@ -5,7 +5,7 @@ import { useSearchParams, useParams } from 'next/navigation'
 import MapComponent from '@/components/Map'
   
 export default function PageApp() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+  const baseUrl: string = process.env.NEXT_PUBLIC_BASE_URL as string
   const searchParams = useSearchParams()
   const simplified = searchParams.get('simplified') || 0.005
   const type = searchParams.get('type') || 'combined'

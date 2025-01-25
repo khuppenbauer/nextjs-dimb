@@ -8,7 +8,7 @@ export default function PageApp() {
   const searchParams = useSearchParams()
   const params = useParams()
   const simplified = searchParams.get('simplified') || 0.005
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+  const baseUrl: string = process.env.NEXT_PUBLIC_BASE_URL as string
   const { slug } = params;
   const url =  `${baseUrl}/api/igs/${slug}/geometry?simplified=${simplified}`
   return (

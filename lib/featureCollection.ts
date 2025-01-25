@@ -1,6 +1,6 @@
 import * as turf from '@turf/turf'
-import GeoJsonFeatureCollectionType from '../interfaces/geoJsonFeatureCollection';
-import GeoJsonFeatureType from '../interfaces/geoJsonFeature';
+import GeoJsonFeatureCollectionType from '@/interfaces/geoJsonFeatureCollection';
+import GeoJsonFeatureType from '@/interfaces/geoJsonFeature';
 
 const featureCollection = (features: GeoJsonFeatureType[]) => {
   const featureCollection: GeoJsonFeatureCollectionType = {

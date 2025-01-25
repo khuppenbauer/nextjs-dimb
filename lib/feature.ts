@@ -1,4 +1,4 @@
-import GeoJsonFeatureType from '../interfaces/geoJsonFeature';
+import GeoJsonFeatureType from '@/interfaces/geoJsonFeature';
 
 interface Result {
   name: string;

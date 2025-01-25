@@ -1,5 +1,5 @@
 type MapProps = {
-  baseUrl?: string;
+  baseUrl: string;
   url: string;
   controls: string[];
   label: boolean;
