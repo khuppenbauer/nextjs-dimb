@@ -5,6 +5,9 @@ const nextConfig = {
     metaDataUrl: process.env.METADATA_URL,
     baseUrl: process.env.BASE_URL,
   },
+  env: {
+    metaDataUrl: process.env.METADATA_URL,
+  }
 }
 
 module.exports = nextConfig

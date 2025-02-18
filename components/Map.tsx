@@ -24,6 +24,7 @@ interface PopupContent {
 
 function MapComponent({ baseUrl, url, controls, label }: MapProps) {
   const [ popupContent, setPopupContent ] = useState<PopupContent>({});
+  const metaDataUrl: string = process.env.metaDataUrl as string
 
   useEffect(() => {
     const { labelStyle, polygonStyle, selectStyle, locationStyle } = MapStyles;
@@ -77,7 +78,7 @@ function MapComponent({ baseUrl, url, controls, label }: MapProps) {
       }
     });
 
-    map.on('click', (event: any): void => {
+    map.on('click', async (event: any): Promise<void> => {
       const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => {
         return feature;
       });
@@ -102,6 +103,35 @@ function MapComponent({ baseUrl, url, controls, label }: MapProps) {
           website,
         }
         setPopupContent(popupContent);
+
+        const response = await fetch(
+          `${metaDataUrl}/${name}`
+        );
+        const data = await response.json();
+
+        if (data) {
+          const { 
+            area: {
+              name,
+              url,
+              activities, 
+              'logo-url': logo, 
+              contact: email, 
+              description, 
+              'site-url': website
+            }
+          } = data;
+          const popupContent = {
+            name,
+            url,
+            description,
+            logo: logo?.thumb || logo || '',
+            activities,
+            email,
+            website,
+          }
+          setPopupContent(popupContent);
+        }
       } else {
         setPopupContent({});
       }
