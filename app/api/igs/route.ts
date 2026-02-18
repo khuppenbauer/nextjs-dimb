@@ -1,14 +1,9 @@
 import axios from 'axios';
-import getConfig from 'next/config';
 import { type NextRequest } from 'next/server'
 import GeoJsonFeatureType from '@/interfaces/geoJsonFeature';
 import cors from '@/lib/cors';
 import sql from '@/lib/db';
 import featureCollection from '@/lib/featureCollection';
-
-const {
-  publicRuntimeConfig: { metaDataUrl, baseUrl },
-} = getConfig();
 
 interface Result {
   meta: any;
@@ -18,6 +13,8 @@ interface Result {
 export async function POST(
   request: NextRequest
 ) {
+  const metaDataUrl = process.env.NEXT_PUBLIC_METADATA_URL
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   const searchParams = request.nextUrl.searchParams
   const simplified = searchParams.get('simplified') || 0.005
   const result = await axios({

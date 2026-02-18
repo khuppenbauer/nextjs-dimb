@@ -1,5 +1,5 @@
 # Use an official node runtime as a parent image
-FROM node:18-alpine
+FROM node:24-alpine
 
 # Set the working directory
 WORKDIR /app
@@ -21,7 +21,7 @@ ARG METADATA_URL
 ENV DATABASE_URL=${DATABASE_URL}
 ENV BASE_URL=${BASE_URL}
 ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
-ENV METADATA_URL=${METADATA_URL}
+ENV NEXT_PUBLIC_METADATA_URL=${METADATA_URL}
 
 # Build the Next.js app
 RUN npm run build

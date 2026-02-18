@@ -1,6 +1,5 @@
 import axios from 'axios';
 import crypto from 'crypto';
-import getConfig from 'next/config';
 import { type NextRequest } from 'next/server'
 import cors from '@/lib/cors';
 import sql from '@/lib/db';
@@ -16,10 +15,6 @@ interface Postcode {
   postcode: string;
   [key: string]: any 
 };
-
-const {
-  publicRuntimeConfig: { metaDataUrl },
-} = getConfig();
 
 const cache = async(name: string, meta: any, geometry: any, simplified: any, postcodes: any) => {  
   await sql`
@@ -37,6 +32,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const metaDataUrl = process.env.NEXT_PUBLIC_METADATA_URL
   const searchParams = request.nextUrl.searchParams
   const simplified = searchParams.get('simplified') || 0.005
   const slug = (await params).slug

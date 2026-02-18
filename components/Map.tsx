@@ -24,7 +24,7 @@ interface PopupContent {
 
 function MapComponent({ baseUrl, url, controls, label }: MapProps) {
   const [ popupContent, setPopupContent ] = useState<PopupContent>({});
-  const metaDataUrl: string = process.env.metaDataUrl as string
+  const metaDataUrl: string = process.env.NEXT_PUBLIC_METADATA_URL as string
 
   useEffect(() => {
     const { labelStyle, polygonStyle, selectStyle, locationStyle } = MapStyles;
