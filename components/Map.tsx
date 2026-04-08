@@ -86,23 +86,7 @@ function MapComponent({ baseUrl, url, controls, label }: MapProps) {
         const properties = feature.getProperties();
         const { 
           name,
-          url,
-          activities, 
-          'logo-url': logo, 
-          contact: email, 
-          description, 
-          'site-url': website  
         } = properties;
-        const popupContent = {
-          name,
-          url,
-          description,
-          logo: logo?.thumb || logo || '',
-          activities,
-          email,
-          website,
-        }
-        setPopupContent(popupContent);
 
         const response = await fetch(
           `${metaDataUrl}/${name}`
