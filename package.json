@@ -23,7 +23,7 @@
     "@tailwindcss/postcss": "^4.2.2",
     "@turf/turf": "^7.3.4",
     "autoprefixer": "^10.4.27",
-    "axios": "^1.15.0",
+    "axios": "^1.15.2",
     "next": "^16.2.3",
     "ol": "^10.8.0",
     "postgres": "^3.4.9",
